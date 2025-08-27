@@ -25,14 +25,14 @@ steps:
 #    - '-t'
 #    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}'
 #    - './scraping'
-#
-#- name: 'gcr.io/cloud-builders/docker'
-#  id: 'build-geocoding'
-#  args:
-#    - 'build'
-#    - '-t'
-#    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}'
-#    - './geocoding'
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-geocoding'
+  args:
+    - 'build'
+    - '-t'
+    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}'
+    - './geocoding'
 
 #- name: 'gcr.io/cloud-builders/docker'
 #  id: 'build-modeling'
@@ -50,7 +50,7 @@ steps:
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'push-geocoding'
-  #waitFor: ['build-geocoding']
+  waitFor: ['build-geocoding']
   args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}']
 
 #- name: 'gcr.io/cloud-builders/docker'
@@ -63,6 +63,7 @@ steps:
 - name: 'python:3.11'
   id: 'compile-pipeline'
  # waitFor: ['push-scraping', 'push-geocoding', 'push-modeling']
+  waitFor: ['push-geocoding']
   entrypoint: 'bash'
   args:
   - '-c'
