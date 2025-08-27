@@ -25,7 +25,6 @@ google-cloud-secret-manager
 google-crc32c
 grpcio
 humanize
-matplotlib
 numpy
 pandas
 pandas-gbq

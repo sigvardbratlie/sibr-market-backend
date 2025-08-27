@@ -67,11 +67,15 @@ steps:
   args:
   - '-c'
   - |
+    sed -i "s|SCRAPING_IMAGE_PLACEHOLDER|europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}|g" pipelines/pipeline.py
+    sed -i "s|GEOCODING_IMAGE_PLACEHOLDER|europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}|g" pipelines/pipeline.py
+    sed -i "s|MODELING_IMAGE_PLACEHOLDER|europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}|g" pipelines/pipeline.py
+
+    # Nå, installer dependencies og kompiler filen som nå har de korrekte URI-ene
     pip install -r requirements.txt && \
     python pipelines/pipeline.py
 
 
-# ---- STEG 4: Opprett eller oppdater tidsplanen for pipelinen ----
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   id: 'schedule-pipeline'
   waitFor: ['compile-pipeline']
@@ -83,25 +87,10 @@ steps:
     - '--project=sibr-market'
     - '--location=europe-west1'
     - '--display-name=sibr-market-scheduled-run'
-    - '--template-uri=sibr_market_pipeline.json'
-    # ---- Her er magien! Velg ETT av schedule-flaggene under ----
-
-    # Eksempel 1: Hver 3. dag kl. 02:00
+    - '--template-uri=gs://sibr-market/sibr_market_pipeline.json' # <-- Laster opp fra GCS er mer robust
     - '--schedule=0 2 */3 * *'
-
-    # Eksempel 2: Mandag, onsdag, fredag kl. 02:00 (kommenter ut den over)
-    #- '--schedule=0 2 * * 1,3,5'
-
     - '--schedule-time-zone=Europe/Oslo'
-    # Lag en JSON-string med parametere for å sende inn den unike taggen
-    - |
-      --pipeline-root=gs://sibr-market
-    - |
-      --schedule-pipeline-parameters-json={
-          "scraping_image": "europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}",
-          "geocoding_image": "europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}",
-          "mldata_image": "europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}"
-      }
+    - '--pipeline-root=gs://sibr-market'
 
 images:
 - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}'

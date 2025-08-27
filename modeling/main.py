@@ -32,9 +32,9 @@ def main():
 
     # Flagg for å styre kjøring
     parser.add_argument('--run_all', action='store_true', help='Run all tasks for cars and homes except training. To also run training, use --task train or --run_train.')
-    parser.add_argument('--run_clean', action='store_true', help=f'Run cleaning for all datasets: {SUPPORTED_DATASETS}')
-    parser.add_argument('--run_train', action='store_true', help='Run training for a specific dataset.')
-    parser.add_argument('--run_predict', action='store_true', help='Run prediction for a specific dataset.')
+    parser.add_argument('--run-clean', action='store_true', help=f'Run cleaning for all datasets: {SUPPORTED_DATASETS}')
+    parser.add_argument('--run-train', action='store_true', help='Run training for a specific dataset.')
+    parser.add_argument('--run-predict', action='store_true', help='Run prediction for a specific dataset.')
     parser.add_argument('--log-level', type = str, default='DEBUG' ,help='Loglevel')
     parser.add_argument('--cloud-logging', action='store_true', help='Enables cloud logging.')
 
