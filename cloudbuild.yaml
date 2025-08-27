@@ -26,13 +26,13 @@ steps:
 #    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}'
 #    - './scraping'
 
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'build-geocoding'
-  args:
-    - 'build'
-    - '-t'
-    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}'
-    - './geocoding'
+#- name: 'gcr.io/cloud-builders/docker'
+#  id: 'build-geocoding'
+#  args:
+#    - 'build'
+#    - '-t'
+#    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}'
+#    - './geocoding'
 
 #- name: 'gcr.io/cloud-builders/docker'
 #  id: 'build-modeling'
@@ -48,11 +48,11 @@ steps:
 #  waitFor: ['build-scraping']
 #  args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}']
 
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'push-geocoding'
-  waitFor: ['build-geocoding']
-  args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}']
-
+#- name: 'gcr.io/cloud-builders/docker'
+#  id: 'push-geocoding'
+#  waitFor: ['build-geocoding']
+#  args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}']
+#
 #- name: 'gcr.io/cloud-builders/docker'
 #  id: 'push-modeling'
 #  waitFor: ['build-modeling']
@@ -63,7 +63,6 @@ steps:
 - name: 'python:3.11'
   id: 'compile-pipeline'
  # waitFor: ['push-scraping', 'push-geocoding', 'push-modeling']
-  waitFor: ['push-geocoding']
   entrypoint: 'bash'
   args:
   - '-c'
@@ -73,7 +72,7 @@ steps:
     sed -i "s|MODELING_IMAGE_PLACEHOLDER|europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}|g" pipelines/pipeline.py
 
     # Nå, installer dependencies og kompiler filen som nå har de korrekte URI-ene
-    pip install -r requirements.txt && \
+    pip install -r pipelines/requirements.txt && \
     python pipelines/pipeline.py
 
 # ---- STEP 4: Create pipeline ----
