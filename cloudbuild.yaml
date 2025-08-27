@@ -59,7 +59,6 @@ steps:
 #  waitFor: ['build-modeling']
 #  args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}']
 
-
 ## ---- STEG 3: Compile the pipeline ----
 #- name: 'python:3.11'
 #  id: 'compile-pipeline'
