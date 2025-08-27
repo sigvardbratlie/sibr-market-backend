@@ -2,3 +2,4 @@ google-cloud-aiplatform
 google-cloud-storage
 python-dotenv
 kfp
+PyYAML
