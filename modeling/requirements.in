@@ -35,7 +35,6 @@ requests-oauthlib
 requests-toolbelt
 scikit-learn
 scipy
-seaborn
 shapely
 tomli
 torch
