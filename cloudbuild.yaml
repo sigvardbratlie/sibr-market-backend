@@ -75,57 +75,82 @@ steps:
 #    pip install -r pipelines/requirements.txt && \
 #    python pipelines/pipeline.py
 
-# ---- STEP 4: Submit and schedule the pipeline using Python SDK ----
+# ---- STEP 4: Oppdater eller opprett pipeline-schedule ----
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  id: 'submit-pipeline'
+  id: 'submit-or-update-pipeline'
   #waitFor: ['compile-pipeline']
   entrypoint: 'bash'
   args:
     - '-c'
     - |
-      # Installer Python dependencies (pip er vanligvis forhåndsinstallert)
+      set -e # Avslutt scriptet umiddelbart hvis en kommando feiler
+
+      # Installer Python dependencies
       apt-get update && apt-get install -y python3-venv
 
-      # 1. Opprett og aktiver et virtuelt miljø
+      # Opprett og aktiver virtuelt miljø
       python3 -m venv venv
+      source venv/bin/activate
       
-      # 2. Installer pakker INNE i det virtuelle miljøet
-      ./venv/bin/pip install -r pipelines/requirements.txt
+      # Installer pakker
+      pip install -r pipelines/requirements.txt
 
-      # Lag Python-skriptet
-      cat <<EOF > submit_pipeline.py
+      # Lag Python-skriptet for å oppdatere eller opprette
+      cat <<EOF > submit_or_update_schedule.py
       import google.cloud.aiplatform as aiplatform
+      import os
 
-      aiplatform.init(project='sibr-market', location='europe-west1')
+      PROJECT_ID = os.getenv('PROJECT_ID', 'sibr-market')
+      LOCATION = os.getenv('LOCATION', 'europe-west1')
+      SCHEDULE_NAME = 'sibr-market-schedule'
+      PIPELINE_SPEC_URI = 'gs://sibr-market/sibr_market_pipeline.json'
+      PIPELINE_ROOT = 'gs://sibr-market'
+      CRON_EXPRESSION = '0 2 */3 * *'
+      TIME_ZONE = 'Europe/Oslo'
 
-      # Submit the PipelineJob
-      job = aiplatform.PipelineJob(
-          display_name='sibr-market-scheduled-run',
-          template_path='gs://sibr-market/sibr_market_pipeline.json',
-          pipeline_root='gs://sibr-market'
+      aiplatform.init(project=PROJECT_ID, location=LOCATION)
+
+      print(f"Looking for existing schedule with display name: {SCHEDULE_NAME}")
+      schedules = aiplatform.PipelineJobSchedule.list(
+          filter=f'display_name="{SCHEDULE_NAME}"'
       )
-      job.submit()
 
-      # Create a schedule for recurring runs (adjust cron as needed: '0 2 */3 * *' = every 3 days at 2:00 AM)
-      try:
-          schedule = aiplatform.PipelineJobSchedule.create(
-              pipeline_job=job,
-              display_name='sibr-market-schedule',
-              cron='0 2 */3 * *', # Kjører kl 02:00 hver tredje dag
-              time_zone='Europe/Oslo'
+      if schedules:
+          print("Found existing schedule. Pausing, updating, and resuming.")
+          schedule = schedules[0]
+          
+          print(f"Pausing schedule: {schedule.resource_name}")
+          schedule.pause()
+
+          # Oppdater kun pipeline-spesifikasjonen (malen)
+          schedule.update(
+              pipeline_spec_uri=PIPELINE_SPEC_URI,
+          )
+          print(f"Schedule updated to use new pipeline spec: {PIPELINE_SPEC_URI}")
+
+          print(f"Resuming schedule: {schedule.resource_name}")
+          schedule.resume()
+          print("Schedule successfully updated and resumed.")
+
+      else:
+          print("No existing schedule found. Creating a new one.")
+          aiplatform.PipelineJobSchedule.create(
+              display_name=SCHEDULE_NAME,
+              cron=CRON_EXPRESSION,
+              pipeline_spec_uri=PIPELINE_SPEC_URI,
+              pipeline_root=PIPELINE_ROOT,
+              time_zone=TIME_ZONE,
+              enable_caching=False # Anbefales for å sikre at nye data brukes
           )
           print("Successfully created a new schedule.")
-      except Exception as e:
-          # This will fail if a schedule with the same display_name already exists.
-          # You might want to add logic to update the existing schedule instead.
-          print(f"Could not create schedule, it might already exist: {e}")
 
       EOF
 
-      # 3. Kjør skriptet med Python fra det virtuelle miljøet
-      ./venv/bin/python submit_pipeline.py
+      # Kjør skriptet
+      python submit_or_update_schedule.py
 
-images:
-- 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}'
-- 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}'
-- 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}'
+# ---- Images (kommentert ut for nå) ----
+#images:
+#- 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}'
+#- 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}'
+#- 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}'
