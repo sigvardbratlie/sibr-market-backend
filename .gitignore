@@ -1,0 +1,105 @@
+# Python-spesifikke filer
+# -----------------------
+
+*.pyc
+*.o
+*.pyd
+*.egg-info/
+.Python
+__pycache__/
+venv/
+env/
+.venv/
+build/
+dist/
+develop-eggs/
+.eggs/
+.tox/
+.mypy_cache/
+.pytest_cache/
+.ipynb_checkpoints/ # Jupyter notebooks checkpoints
+
+# IDE-spesifikke filer
+# --------------------
+# IntelliJ IDEA
+.idea/
+
+# VS Code
+.vscode/
+.history/
+
+# Eclipse
+.project
+.pydevproject
+.settings/
+.buildpath
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.config
+*.pdb
+*.obj
+
+# Operativsystem-spesifikke filer
+# -------------------------------
+.DS_Store # macOS
+.Trashes # macOS
+ehthumbs.db # Windows
+Thumbs.db # Windows
+Desktop.ini # Windows
+$RECYCLE.BIN/ # Windows
+
+# Loggfiler
+# ---------
+*.log
+logfiles/
+
+# Databasefiler
+# -------------
+*.sqlite3
+*.db
+*.sqlitedb
+
+# Midlertidige og backup-filer
+# ----------------------------
+*~
+*.bak
+*.swp # Vim swap files
+*.swo # Vim swap files
+
+# Environment variables
+# ---------------------
+.env
+.flaskenv
+
+# Datafiler (eksempler, juster etter behov)
+# ------------------------------------------
+*.csv
+*.xlsx
+*.parquet
+*.feather
+#*.json
+*.sqlite
+data/ # Eller en spesifikk mappe for rådata
+
+# Output-filer (eksempler, juster etter behov)
+# --------------------------------------------
+results/
+output/
+models/
+*.pkl
+*.joblib
+
+catboost_info/
+
+*.env
+*.json
+*.xml
+
+examples/
+
+
+
+
