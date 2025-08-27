@@ -34,7 +34,6 @@ steps:
 #    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}'
 #    - './geocoding'
 
-
 #- name: 'gcr.io/cloud-builders/docker'
 #  id: 'build-modeling'
 #  args:
