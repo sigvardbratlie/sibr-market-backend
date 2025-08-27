@@ -16,23 +16,23 @@ steps:
     else
       echo "Keyword found. Proceeding with build."
     fi
-
-# ---- STEG 1: Bygg alle tre imagene (parallelt) ----
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'build-scraping'
-  args:
-    - 'build'
-    - '-t'
-    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}'
-    - './scraping'
-
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'build-geocoding'
-  args:
-    - 'build'
-    - '-t'
-    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}'
-    - './geocoding'
+#
+## ---- STEG 1: Bygg alle tre imagene (parallelt) ----
+#- name: 'gcr.io/cloud-builders/docker'
+#  id: 'build-scraping'
+#  args:
+#    - 'build'
+#    - '-t'
+#    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}'
+#    - './scraping'
+#
+#- name: 'gcr.io/cloud-builders/docker'
+#  id: 'build-geocoding'
+#  args:
+#    - 'build'
+#    - '-t'
+#    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}'
+#    - './geocoding'
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'build-modeling'

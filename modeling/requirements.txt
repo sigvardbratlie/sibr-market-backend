@@ -86,10 +86,6 @@ geographiclib==2.1
     # via geopy
 geojson==3.2.0
     # via -r requirements.in
-geopandas==1.1.1
-    # via
-    #   -r requirements.in
-    #   bigframes
 geopy==2.4.1
     # via -r requirements.in
 google-api-core[grpc]==2.25.1
@@ -318,7 +314,6 @@ numpy==2.3.2
     #   bigframes
     #   catboost
     #   db-dtypes
-    #   geopandas
     #   lightgbm
     #   matplotlib
     #   pandas
@@ -340,7 +335,6 @@ opentelemetry-api==1.36.0
 packaging==25.0
     # via
     #   db-dtypes
-    #   geopandas
     #   google-cloud-aiplatform
     #   google-cloud-bigquery
     #   lightning-utilities
@@ -356,7 +350,6 @@ pandas==2.3.2
     #   bigframes
     #   catboost
     #   db-dtypes
-    #   geopandas
     #   google-cloud-bigquery
     #   pandas-gbq
     #   pyjstat
@@ -448,12 +441,8 @@ pygments==2.19.2
     #   rich
 pyjstat==2.4.0
     # via -r requirements.in
-pyogrio==0.11.1
-    # via geopandas
 pyparsing==3.2.3
     # via matplotlib
-pyproj==3.7.2
-    # via geopandas
 pytest==8.4.1
     # via -r requirements.in
 python-dateutil==2.9.0.post0
@@ -509,7 +498,6 @@ shapely==2.1.1
     # via
     #   -r requirements.in
     #   bigframes
-    #   geopandas
     #   google-cloud-aiplatform
 sibr-module==0.1.9
     # via -r requirements.in

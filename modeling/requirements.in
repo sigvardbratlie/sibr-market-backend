@@ -4,7 +4,6 @@ catboost
 db-dtypes
 gcsfs
 geojson
-geopandas
 geopy
 google-api-core
 google-auth
