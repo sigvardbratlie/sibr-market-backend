@@ -33,3 +33,4 @@ pillow
 requests
 shapely
 sibr-module
+pathlib

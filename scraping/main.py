@@ -1,5 +1,4 @@
 import logging
-
 from scrapy.crawler import CrawlerProcess
 from finn_scraper.spiders.car import CarSpider
 from finn_scraper.spiders.home import HomeSpider
@@ -12,6 +11,17 @@ from scrapy.utils.project import get_project_settings
 from scrapy.utils.log import configure_logging
 from datetime import datetime
 import argparse
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
+
+project_root = Path(__file__).resolve().parent.parent
+dotenv_path = project_root / '.env'
+load_dotenv(dotenv_path=dotenv_path)
+
+if os.getenv("GOOGLE_APPLICATION_CREDENTIALS") is None:
+    print(f'============ !!!! CREDENTIALS not found !!!! ================')
 
 map_spiders = {'homes': HomeSpider,
        'cars': CarSpider,
@@ -30,7 +40,7 @@ parser.add_argument('--urls-file',
                     type=str,
                     help='Path to a text file containing a list of ad URLs to scrape, one URL per line.')
 
-parser.add_argument('--other_urls',
+parser.add_argument('--other-urls',
                     nargs='*',
                     help='Other URLs to scrape. Needs to be front page url from finn.no')
 parser.add_argument('--log_level',default='INFO',help='Set the logging level (default: INFO)')

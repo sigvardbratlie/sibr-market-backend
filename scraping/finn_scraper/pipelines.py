@@ -87,7 +87,7 @@ class BQPipeline:
             for col in df.columns:
                 if col != "scrape_date":
                     df[col] = df[col].astype(str)
-            df["scrape_date"] = pd.to_datetime(df["scrape_date"],errors="coerce").dt.date
+            df["scrape_date"] = pd.to_datetime(df["scrape_date"]).dt.date
             job_config = bigquery.LoadJobConfig(
                 write_disposition="WRITE_APPEND",
                 schema = [bigquery.SchemaField("scrape_date", "DATE")],

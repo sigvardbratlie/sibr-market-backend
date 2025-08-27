@@ -3,11 +3,16 @@ import asyncio
 from datetime import datetime
 import argparse
 from dotenv import load_dotenv
-load_dotenv()
-#print(f'GOOGLE {os.getenv("GOOGLE_APPLICATION_CREDENTIALS")}')
+from pathlib import Path
 from src.GeoCodeAPI import geonorgeAPI,nominatimAPI
 from sibr_module import Logger
 
+project_root = Path(__file__).resolve().parent.parent
+dotenv_path = project_root / '.env'
+load_dotenv(dotenv_path=dotenv_path)
+
+if os.getenv("GOOGLE_APPLICATION_CREDENTIALS") is None:
+    print(f'============ !!!! CREDENTIALS not found !!!! ================')
 
 map_geocoders = {"nominatim" : nominatimAPI,
                 "geonorge" : geonorgeAPI}

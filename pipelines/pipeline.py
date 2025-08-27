@@ -1,14 +1,14 @@
 from kfp import dsl,compiler
 from google.cloud import aiplatform
-import os
-os.chdir('..')
+from google.cloud import storage
 from dotenv import load_dotenv
 load_dotenv()
 
 # ---- SETUP ----
 PROJECT_ID = 'sibr-market'
 REGION = 'europe-west1'
-BUCKET_URI = 'gs://sibr-market'
+BUCKET_NAME = 'sibr-market'
+BUCKET_URI = f'gs://{BUCKET_NAME}'
 REPO = 'sibr-market-repo'
 
 # ---- PIPELINE COMPONENTS ----
@@ -82,6 +82,9 @@ if __name__ == '__main__':
         template_path=PIPELINE_JSON,
         pipeline_root=BUCKET_URI,
     )
+
+    client = storage.Client()
+    client.get_bucket(BUCKET_NAME).blob(PIPELINE_JSON).upload_from_filename(PIPELINE_JSON)
 
     #job.run()
 

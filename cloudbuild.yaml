@@ -1,0 +1,91 @@
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+# ---- STEG 1 & 2: Bygg og push alle imagene (samme som før) ----
+# (Behold alle dine 'build-...' og 'push-...' steg her)
+# ...
+# ---- STEG 1: Bygg alle tre imagene (parallelt) ----
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-scraping'
+  args:
+    - 'build'
+    - '-t'
+    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}'
+    - './scraping'
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-geocoding'
+  args:
+    - 'build'
+    - '-t'
+    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}'
+    - './geocoding'
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-modeling'
+  args:
+    - 'build'
+    - '-t'
+    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}'
+    - './modeling'
+
+# ---- STEG 2: Push alle tre imagene til Artifact Registry ----
+- name: 'gcr.io/cloud-builders/docker'
+  waitFor: ['build-scraping']
+  args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}']
+- name: 'gcr.io/cloud-builders/docker'
+  waitFor: ['build-geocoding']
+  args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}']
+- name: 'gcr.io/cloud-builders/docker'
+  waitFor: ['build-modeling']
+  args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}']
+
+
+# ---- STEG 3: Kompiler pipeline-definisjonen ----
+- name: 'python:3.11'
+  id: 'compile-pipeline'
+  waitFor: ['push-scraping', 'push-geocoding', 'push-modeling']
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    pip install -r requirements.txt && \
+    python pipelines/pipeline.py
+
+# ---- STEG 4: Opprett eller oppdater tidsplanen for pipelinen ----
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  id: 'schedule-pipeline'
+  waitFor: ['compile-pipeline']
+  entrypoint: 'gcloud'
+  args:
+    - 'ai'
+    - 'pipeline-jobs'
+    - 'create'
+    - '--project=sibr-market'
+    - '--location=europe-west1'
+    - '--display-name=sibr-market-scheduled-run'
+    - '--template-uri=sibr_market_pipeline.json'
+    # ---- Her er magien! Velg ETT av schedule-flaggene under ----
+
+    # Eksempel 1: Hver 3. dag kl. 02:00
+    - '--schedule=0 2 */3 * *'
+
+    # Eksempel 2: Mandag, onsdag, fredag kl. 02:00 (kommenter ut den over)
+    #- '--schedule=0 2 * * 1,3,5'
+
+    - '--schedule-time-zone=Europe/Oslo'
+    # Lag en JSON-string med parametere for å sende inn den unike taggen
+    - |
+      --pipeline-root=gs://sibr-market
+    - |
+      --schedule-pipeline-parameters-json={
+          "scraping_image": "europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}",
+          "geocoding_image": "europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}",
+          "mldata_image": "europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}"
+      }
+
+images:
+- 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}'
+- 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}'
+- 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}'

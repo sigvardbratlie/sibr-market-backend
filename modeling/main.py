@@ -1,10 +1,17 @@
 import argparse
-# 1. Importer spesifikt det du trenger
+import os
+from pathlib import Path
 from src.sibr_market_training import Clean, Train, Predict
 from sibr_module import Logger
 import logging
 from dotenv import load_dotenv
-load_dotenv(verbose=True)
+
+project_root = Path(__file__).resolve().parent.parent
+dotenv_path = project_root / '.env'
+load_dotenv(dotenv_path=dotenv_path)
+
+if os.getenv("GOOGLE_APPLICATION_CREDENTIALS") is None:
+    print(f'============ !!!! CREDENTIALS not found !!!! ================')
 
 # 2. Definer konstanter for å unngå "magiske strenger" og repetisjon
 SUPPORTED_DATASETS = ['cars', 'homes', 'rentals']

@@ -108,7 +108,7 @@ class FinnBaseSpider(scrapy.Spider):
             await page.close()
         self.logger.error(repr(failure))
 
-    def start_requests(self):
+    async def start(self):
         for url in self.start_urls:
             meta = {'errback': self.errback}
 

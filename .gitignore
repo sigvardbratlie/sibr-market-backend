@@ -100,7 +100,7 @@ catboost_info/
 
 examples/
 
-/requirements.in
+/pipelines/requirements.in
 /requirements.txt
 
 

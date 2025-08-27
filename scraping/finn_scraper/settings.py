@@ -5,8 +5,6 @@ from google.cloud.logging.handlers import CloudLoggingHandler
 from google.oauth2 import service_account
 from google.cloud.logging_v2.handlers import StructuredLogHandler
 import os
-from dotenv import load_dotenv
-load_dotenv()
 
 # Scrapy settings for finn_scraper project
 #
