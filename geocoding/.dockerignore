@@ -1,0 +1,53 @@
+# Python-spesifikke filer og mapper
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python/
+env/
+venv/
+.venv/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Scrapy-spesifikke filer og mapper
+.scrapy/  # Mapper for logs, stats.json, osv. opprettet av Scrapy
+*.log     # Eventuelle loggfiler generert av Scrapy eller applikasjonen din
+
+# Versjonskontroll (Git)
+.git/
+.gitignore
+
+# Redigerings- og IDE-spesifikke filer
+.vscode/    # Visual Studio Code-filer
+.idea/      # IntelliJ/PyCharm-filer
+*.sublime-project
+*.sublime-workspace
+.DS_Store   # macOS-spesifikke filer
+
+# Lokale datautdata
+data/      # Hvis du lagrer skrapet data i en 'data/' mappe lokalt
+output/    # Generiske utdatamapper
+results/   # Andre resultatmapper
+
+# Midlertidige filer
+*.tmp
+*~
+
+tests/
+*.ipynb
+
+*.log
+
+*.json
+/examples
+
+*.yml
+*.yaml
+
+
+
+
