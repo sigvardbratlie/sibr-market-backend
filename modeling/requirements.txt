@@ -317,7 +317,6 @@ numpy==2.3.2
     #   -r requirements.in
     #   bigframes
     #   catboost
-    #   contourpy
     #   db-dtypes
     #   geopandas
     #   lightgbm
