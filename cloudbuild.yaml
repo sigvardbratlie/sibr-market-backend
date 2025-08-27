@@ -75,50 +75,42 @@ steps:
 #    pip install -r pipelines/requirements.txt && \
 #    python pipelines/pipeline.py
 
-# ---- STEP 4: Opprett eller Oppdater Schedule med gcloud ----
+# ---- STEP 4: Opprett eller Oppdater Schedule med gcloud (KORRIGERT) ----
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   id: 'submit-or-update-pipeline-schedule'
-  # waitFor: ['compile-pipeline'] # Fjern kommentaren når steg 3 er aktivt
   entrypoint: 'bash'
   args:
     - '-c'
     - |
-      set -e # Stopp scriptet hvis en kommando feiler
+      set -e
 
       SCHEDULE_NAME="sibr-market-schedule"
       REGION="europe-west1"
-      PROJECT_ID="sibr-market"
       PIPELINE_SPEC_URI="gs://sibr-market/sibr_market_pipeline.json"
-      CRON_EXPRESSION="0 2 */3 * *" # Kjører kl 02:00 hver tredje dag
+      CRON_EXPRESSION="0 2 */3 * *"
 
-      echo "Checking for existing schedule: ${SCHEDULE_NAME}"
+      echo "Checking for existing schedule: \${SCHEDULE_NAME}"
 
-      # Forsøk å hente schedule-ID. Bruker || true for å unngå at bygget feiler hvis den ikke finnes.
+      # Bruker \\ escaping for å unngå at Cloud Build feiltolker filteret
       SCHEDULE_ID=$(gcloud ai pipeline-schedules list \
-        --region=${REGION} \
-        --project=${PROJECT_ID} \
-        --filter="displayName=${SCHEDULE_NAME}" \
+        --region=\${REGION} \
+        --filter="displayName=\${SCHEDULE_NAME}" \
         --format="value(name)" || true)
 
-      if [[ -n "${SCHEDULE_ID}" ]]; then
+      if [[ -n "\${SCHEDULE_ID}" ]]; then
         echo "Schedule exists. Updating pipeline spec."
-
-        # Du trenger ikke pause/resume for å oppdatere pipeline spec
-        gcloud ai pipeline-schedules update ${SCHEDULE_ID} \
-          --pipeline-spec-uri=${PIPELINE_SPEC_URI} \
-          --region=${REGION} \
-          --project=${PROJECT_ID}
+        gcloud ai pipeline-schedules update \${SCHEDULE_ID} \
+          --pipeline-spec-uri=\${PIPELINE_SPEC_URI} \
+          --region=\${REGION}
         
         echo "Schedule successfully updated."
-
       else
         echo "Schedule does not exist. Creating a new one."
         gcloud ai pipeline-schedules create \
-          --display-name=${SCHEDULE_NAME} \
-          --cron="${CRON_EXPRESSION}" \
-          --pipeline-spec-uri=${PIPELINE_SPEC_URI} \
-          --region=${REGION} \
-          --project=${PROJECT_ID}
+          --display-name=\${SCHEDULE_NAME} \
+          --cron="\${CRON_EXPRESSION}" \
+          --pipeline-spec-uri=\${PIPELINE_SPEC_URI} \
+          --region=\${REGION}
           
         echo "Schedule successfully created."
       fi
