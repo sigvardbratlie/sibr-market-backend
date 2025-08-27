@@ -17,8 +17,8 @@ class FinnScraperPipeline:
 
 
 class BQPipeline:
-    def __init__(self,bq_path,project,batch_size=100):
-        self.bq_path = bq_path
+    def __init__(self,project,batch_size=100):
+        #self.bq_path = bq_path
         self.batch_size = batch_size
         self.project = project
         self.buffer = []
@@ -28,7 +28,6 @@ class BQPipeline:
     @classmethod
     def from_crawler(cls,crawler):
         return cls(
-            bq_path = crawler.settings.get('BQ_PATH'),
             batch_size = crawler.settings.getint('BQ_BATCH_SIZE',2500),
             project = crawler.settings.get('GOOGLE_CLOUD_PROJECT')
         )

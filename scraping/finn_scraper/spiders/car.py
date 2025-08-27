@@ -209,7 +209,7 @@ class CarSpider(FinnBaseSpider):
         ownership_details = {
             "state": "Bilen står i",
             "prev_owners": "Eiere",
-            "sales_type": "Slagsform",
+            "sales_type": "Salgsform",
             "transfer_fee": "Omregistrering",
             "price_excl_transfer": "Pris eksl. omreg.",
             "first_registration": "1. gang registrert",

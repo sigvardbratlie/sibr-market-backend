@@ -6,12 +6,16 @@ from sibr_module import Logger
 import logging
 from dotenv import load_dotenv
 
-project_root = Path(__file__).resolve().parent.parent
-dotenv_path = project_root / '.env'
-load_dotenv(dotenv_path=dotenv_path)
+load_dotenv()
 
-if os.getenv("GOOGLE_APPLICATION_CREDENTIALS") is None:
-    print(f'============ !!!! CREDENTIALS not found !!!! ================')
+cred_filename = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_FILENAME")
+if cred_filename:
+    print(f'RUNNING LOCAL. ADAPTING LOADING PROCESS')
+    project_root = Path(__file__).parent
+    os.chdir(project_root)
+    dotenv_path = project_root.parent / '.env'
+    load_dotenv(dotenv_path=dotenv_path)
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(project_root.parent / cred_filename)
 
 # 2. Definer konstanter for å unngå "magiske strenger" og repetisjon
 SUPPORTED_DATASETS = ['cars', 'homes', 'rentals']

@@ -35,7 +35,10 @@ class GeoBase(metaclass=abc.ABCMeta):
         self.logger = logger
         self.api_key = None
         self.session = None
-        self.use_proxy = False
+        self.use_proxy = True
+        if proxies is None:
+            proxies = {'http': 'http://sigvarbrat49411:jgytj0vcj8@154.21.32.105:21309',
+            'https': 'http://sigvarbrat49411:jgytj0vcj8@154.21.32.105:21309'}
         self.proxies = proxies
         self.base_url = None
         self.ok_responses = 0

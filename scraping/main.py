@@ -14,22 +14,25 @@ import argparse
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+
 load_dotenv()
+cred_filename = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_FILENAME")
 
-project_root = Path(__file__).resolve().parent.parent
-dotenv_path = project_root / '.env'
-load_dotenv(dotenv_path=dotenv_path)
-
-if os.getenv("GOOGLE_APPLICATION_CREDENTIALS") is None:
-    print(f'============ !!!! CREDENTIALS not found !!!! ================')
+if cred_filename:
+    print(f'RUNNING LOCAL. ADAPTING LOADING PROCESS')
+    project_root = Path(__file__).parent
+    os.chdir(project_root)
+    dotenv_path = project_root.parent / '.env'
+    load_dotenv(dotenv_path=dotenv_path)
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(project_root.parent / cred_filename)
 
 map_spiders = {'homes': HomeSpider,
-       'cars': CarSpider,
-        'jobs': JobSpider,
-        'rentals': RentalSpider,
-        'mcs': McSpider,
-        'boats': BoatSpider,
-        'new_homes': NewHomeSpider}
+           'cars': CarSpider,
+            'jobs': JobSpider,
+            'rentals': RentalSpider,
+            'mcs': McSpider,
+            'boats': BoatSpider,
+            'new_homes': NewHomeSpider}
 
 parser = argparse.ArgumentParser(description='Run Finn scraper spiders.')
 parser.add_argument('--spiders',
@@ -47,45 +50,49 @@ parser.add_argument('--log_level',default='INFO',help='Set the logging level (de
 parser.add_argument('--cloud_logging',action='store_true',help='Enable cloud logging')
 
 args = parser.parse_args()
-start = datetime.now()
 
-configure_logging(install_root_handler=False)
-settings = get_project_settings()
-settings.set('LOG_LEVEL', args.log_level.upper())
-settings.set('CLOUD_LOGGING_ENABLED', args.cloud_logging)
-for handler in logging.getLogger().handlers:
-    handler.setLevel(getattr(logging,args.log_level.upper(), logging.INFO))
+if __name__ == "__main__":
+    os.chdir(Path(__file__).parent)
 
-process = CrawlerProcess(settings)
-logging.getLogger().info(f"\n \n -------- NEW SCRAPING JOB STARTED -------- ")
+    start = datetime.now()
+
+    configure_logging(install_root_handler=False)
+    settings = get_project_settings()
+    settings.set('LOG_LEVEL', args.log_level.upper())
+    settings.set('CLOUD_LOGGING_ENABLED', args.cloud_logging)
+    for handler in logging.getLogger().handlers:
+        handler.setLevel(getattr(logging,args.log_level.upper(), logging.INFO))
+
+    process = CrawlerProcess(settings=settings)
+    logging.getLogger().info(f"\n \n -------- NEW SCRAPING JOB STARTED -------- ")
 
 
-if args.urls_file:
-    try:
-        with open(args.urls_file, 'r') as f:
-            # Leser alle linjer og fjerner eventuelle tomme linjer/whitespace
-            urls_to_scrape = [line.strip() for line in f if line.strip()]
-        logging.getLogger().info(f"Loaded {len(urls_to_scrape)} URLs from file: {args.urls_file}")
-    except FileNotFoundError:
-        logging.getLogger().error(f"Error: The file '{args.urls_file}' was not found.")
-        exit(1) # Avslutter skriptet hvis filen ikke finnes
+    if args.urls_file:
+        try:
+            with open(args.urls_file, 'r') as f:
+                # Leser alle linjer og fjerner eventuelle tomme linjer/whitespace
+                urls_to_scrape = [line.strip() for line in f if line.strip()]
+            logging.getLogger().info(f"Loaded {len(urls_to_scrape)} URLs from file: {args.urls_file}")
+        except FileNotFoundError:
+            logging.getLogger().error(f"Error: The file '{args.urls_file}' was not found.")
+            exit(1) # Avslutter skriptet hvis filen ikke finnes
 
-spiders_to_run = [map_spiders[spider] for spider in args.spiders if args.spiders and spider in map_spiders]
-for spider in spiders_to_run:
-    if args.other_urls:
-        logging.getLogger().info(f"Adding {spider.name} with custom URLs: {args.other_urls}")
-        process.crawl(spider, other_urls=args.other_urls)
-    elif args.urls_file:
-        if not urls_to_scrape:
-            raise TypeError(f'No urls in file {args.urls_file}')
-        logging.getLogger().info(f"Adding {spider.name} with URLs from file: {len(urls_to_scrape)} single urls to get")
-        process.crawl(spider, other_urls=urls_to_scrape)
-    else:
-        logging.getLogger().info(f"Adding {spider.name} with default URLs")
-        process.crawl(spider)
+    spiders_to_run = [map_spiders[spider] for spider in args.spiders if args.spiders and spider in map_spiders]
+    for spider in spiders_to_run:
+        if args.other_urls:
+            logging.getLogger().info(f"Adding {spider.name} with custom URLs: {args.other_urls}")
+            process.crawl(spider, other_urls=args.other_urls)
+        elif args.urls_file:
+            if not urls_to_scrape:
+                raise TypeError(f'No urls in file {args.urls_file}')
+            logging.getLogger().info(f"Adding {spider.name} with URLs from file: {len(urls_to_scrape)} single urls to get")
+            process.crawl(spider, other_urls=urls_to_scrape)
+        else:
+            logging.getLogger().info(f"Adding {spider.name} with default URLs")
+            process.crawl(spider)
 
-logging.getLogger().info(f"Starting scraping with spiders: {', '.join(spider.name for spider in spiders_to_run)}")
-process.start()
+    logging.getLogger().info(f"Starting scraping with spiders: {', '.join(spider.name for spider in spiders_to_run)}")
+    process.start()
 
-end = datetime.now()
-logging.getLogger().info(f"Scraping completed in {end - start} seconds")
+    end = datetime.now()
+    logging.getLogger().info(f"Scraping completed in {end - start} seconds")

@@ -87,5 +87,4 @@ if __name__ == '__main__':
     client.get_bucket(BUCKET_NAME).blob(PIPELINE_JSON).upload_from_filename(PIPELINE_JSON)
 
     #job.run()
-
     #kjør denne: gsutil cp sibr_market_pipeline.json gs://sibr-market/
