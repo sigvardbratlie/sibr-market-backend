@@ -78,21 +78,19 @@ steps:
 # ---- STEP 4: Opprett eller Oppdater Schedule med gcloud (KORRIGERT) ----
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   id: 'submit-or-update-pipeline-schedule'
+  waitFor: ['compile-pipeline']
   entrypoint: 'bash'
   args:
     - '-c'
     - |
       set -e
-
       SCHEDULE_NAME="sibr-market-schedule"
       REGION="europe-west1"
       PIPELINE_SPEC_URI="gs://sibr-market/sibr_market_pipeline.json"
       CRON_EXPRESSION="0 2 */3 * *"
 
-      echo "Checking for existing schedule: \${SCHEDULE_NAME}"
-
-      # Bruker \\ escaping for å unngå at Cloud Build feiltolker filteret
-      SCHEDULE_ID=$(gcloud ai pipeline-schedules list \
+      # Bruker \\ for å unngå at Cloud Build feiltolker filteret
+      SCHEDULE_ID=$$(gcloud ai pipeline-schedules list \
         --region=\${REGION} \
         --filter="displayName=\${SCHEDULE_NAME}" \
         --format="value(name)" || true)
@@ -102,8 +100,6 @@ steps:
         gcloud ai pipeline-schedules update \${SCHEDULE_ID} \
           --pipeline-spec-uri=\${PIPELINE_SPEC_URI} \
           --region=\${REGION}
-        
-        echo "Schedule successfully updated."
       else
         echo "Schedule does not exist. Creating a new one."
         gcloud ai pipeline-schedules create \
@@ -111,8 +107,6 @@ steps:
           --cron="\${CRON_EXPRESSION}" \
           --pipeline-spec-uri=\${PIPELINE_SPEC_URI} \
           --region=\${REGION}
-          
-        echo "Schedule successfully created."
       fi
 #
 #images:
