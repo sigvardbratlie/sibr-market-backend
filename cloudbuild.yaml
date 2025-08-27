@@ -79,7 +79,7 @@ steps:
 # ---- STEP 4: Submit and schedule the pipeline using Python SDK ----
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   id: 'submit-pipeline'
-  #waitFor: ['compile-pipeline'] # Pass på å fjerne kommentaren her når steg 3 er aktivt
+  #waitFor: ['compile-pipeline']
   entrypoint: 'bash'
   args:
     - '-c'
@@ -91,7 +91,7 @@ steps:
       python3 -m venv venv
       
       # 2. Installer pakker INNE i det virtuelle miljøet
-      ./venv/bin/pip install google-cloud-aiplatform
+      ./venv/bin/pip install -r pipelines/requirements.txt
 
       # Lag Python-skriptet
       cat <<EOF > submit_pipeline.py
