@@ -75,81 +75,54 @@ steps:
 #    pip install -r pipelines/requirements.txt && \
 #    python pipelines/pipeline.py
 
-# ---- STEP 4: Oppdater eller opprett pipeline-schedule ----
+# ---- STEP 4: Opprett eller Oppdater Schedule med gcloud ----
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  id: 'submit-or-update-pipeline'
-  #waitFor: ['compile-pipeline']
+  id: 'submit-or-update-pipeline-schedule'
+  # waitFor: ['compile-pipeline'] # Fjern kommentaren når steg 3 er aktivt
   entrypoint: 'bash'
   args:
     - '-c'
     - |
-      set -e # Avslutt scriptet umiddelbart hvis en kommando feiler
+      set -e # Stopp scriptet hvis en kommando feiler
 
-      # Installer Python dependencies
-      apt-get update && apt-get install -y python3-venv
+      SCHEDULE_NAME="sibr-market-schedule"
+      REGION="europe-west1"
+      PROJECT_ID="sibr-market"
+      PIPELINE_SPEC_URI="gs://sibr-market/sibr_market_pipeline.json"
+      CRON_EXPRESSION="0 2 */3 * *" # Kjører kl 02:00 hver tredje dag
 
-      # Opprett og aktiver virtuelt miljø
-      python3 -m venv venv
-      source venv/bin/activate
-      
-      # Installer pakker
-      pip install -r pipelines/requirements.txt
+      echo "Checking for existing schedule: ${SCHEDULE_NAME}"
 
-      # Lag Python-skriptet for å oppdatere eller opprette
-      cat <<EOF > submit_or_update_schedule.py
-      import google.cloud.aiplatform as aiplatform
-      import os
+      # Forsøk å hente schedule-ID. Bruker || true for å unngå at bygget feiler hvis den ikke finnes.
+      SCHEDULE_ID=$(gcloud ai pipeline-schedules list \
+        --region=${REGION} \
+        --project=${PROJECT_ID} \
+        --filter="displayName=${SCHEDULE_NAME}" \
+        --format="value(name)" || true)
 
-      PROJECT_ID = os.getenv('PROJECT_ID', 'sibr-market')
-      LOCATION = os.getenv('LOCATION', 'europe-west1')
-      SCHEDULE_NAME = 'sibr-market-schedule'
-      PIPELINE_SPEC_URI = 'gs://sibr-market/sibr_market_pipeline.json'
-      PIPELINE_ROOT = 'gs://sibr-market'
-      CRON_EXPRESSION = '0 2 */3 * *'
-      TIME_ZONE = 'Europe/Oslo'
+      if [[ -n "${SCHEDULE_ID}" ]]; then
+        echo "Schedule exists. Updating pipeline spec."
 
-      aiplatform.init(project=PROJECT_ID, location=LOCATION)
+        # Du trenger ikke pause/resume for å oppdatere pipeline spec
+        gcloud ai pipeline-schedules update ${SCHEDULE_ID} \
+          --pipeline-spec-uri=${PIPELINE_SPEC_URI} \
+          --region=${REGION} \
+          --project=${PROJECT_ID}
+        
+        echo "Schedule successfully updated."
 
-      print(f"Looking for existing schedule with display name: {SCHEDULE_NAME}")
-      schedules = aiplatform.PipelineJobSchedule.list(
-          filter=f'display_name="{SCHEDULE_NAME}"'
-      )
-
-      if schedules:
-          print("Found existing schedule. Pausing, updating, and resuming.")
-          schedule = schedules[0]
+      else
+        echo "Schedule does not exist. Creating a new one."
+        gcloud ai pipeline-schedules create \
+          --display-name=${SCHEDULE_NAME} \
+          --cron="${CRON_EXPRESSION}" \
+          --pipeline-spec-uri=${PIPELINE_SPEC_URI} \
+          --region=${REGION} \
+          --project=${PROJECT_ID}
           
-          print(f"Pausing schedule: {schedule.resource_name}")
-          schedule.pause()
-
-          # Oppdater kun pipeline-spesifikasjonen (malen)
-          schedule.update(
-              pipeline_spec_uri=PIPELINE_SPEC_URI,
-          )
-          print(f"Schedule updated to use new pipeline spec: {PIPELINE_SPEC_URI}")
-
-          print(f"Resuming schedule: {schedule.resource_name}")
-          schedule.resume()
-          print("Schedule successfully updated and resumed.")
-
-      else:
-          print("No existing schedule found. Creating a new one.")
-          aiplatform.PipelineJobSchedule.create(
-              display_name=SCHEDULE_NAME,
-              cron=CRON_EXPRESSION,
-              pipeline_spec_uri=PIPELINE_SPEC_URI,
-              pipeline_root=PIPELINE_ROOT,
-              time_zone=TIME_ZONE,
-              enable_caching=False # Anbefales for å sikre at nye data brukes
-          )
-          print("Successfully created a new schedule.")
-
-      EOF
-
-      # Kjør skriptet
-      python submit_or_update_schedule.py
-
-# ---- Images (kommentert ut for nå) ----
+        echo "Schedule successfully created."
+      fi
+#
 #images:
 #- 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}'
 #- 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}'
