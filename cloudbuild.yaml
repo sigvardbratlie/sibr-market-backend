@@ -1,6 +1,7 @@
 options:
   logging: CLOUD_LOGGING_ONLY
 
+
 steps:
 # STEP 0: Check the commit message.
 - name: 'gcr.io/cloud-builders/git' # <-- THIS IS THE FIX. Use the official git image.
