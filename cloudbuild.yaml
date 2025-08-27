@@ -79,19 +79,21 @@ steps:
 # ---- STEP 4: Submit and schedule the pipeline using Python SDK ----
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   id: 'submit-pipeline'
-  #waitFor: ['compile-pipeline']
+  #waitFor: ['compile-pipeline'] # Pass på å fjerne kommentaren her når steg 3 er aktivt
   entrypoint: 'bash'
   args:
     - '-c'
     - |
-      # Install the beta component (needed for some Vertex AI features, though not directly used here)
-      gcloud components install beta -q
+      # Installer Python dependencies (pip er vanligvis forhåndsinstallert)
+      apt-get update && apt-get install -y python3-venv
 
-      # Install Python dependencies for Vertex AI SDK
-      apt-get update && apt-get install -y python3-pip
-      pip3 install google-cloud-aiplatform
+      # 1. Opprett og aktiver et virtuelt miljø
+      python3 -m venv venv
+      
+      # 2. Installer pakker INNE i det virtuelle miljøet
+      ./venv/bin/pip install google-cloud-aiplatform
 
-      # Run a Python script to submit and schedule the pipeline (create this script inline or separately)
+      # Lag Python-skriptet
       cat <<EOF > submit_pipeline.py
       import google.cloud.aiplatform as aiplatform
 
@@ -106,16 +108,23 @@ steps:
       job.submit()
 
       # Create a schedule for recurring runs (adjust cron as needed: '0 2 */3 * *' = every 3 days at 2:00 AM)
-      schedule = aiplatform.PipelineJobSchedule(
-          pipeline_job=job,
-          display_name='sibr-market-schedule',
-          cron='0 2 */3 * *',
-          timezone='Europe/Oslo'
-      )
-      schedule.create()
+      try:
+          schedule = aiplatform.PipelineJobSchedule.create(
+              pipeline_job=job,
+              display_name='sibr-market-schedule',
+              cron='0 2 */3 * *', # Kjører kl 02:00 hver tredje dag
+              time_zone='Europe/Oslo'
+          )
+          print("Successfully created a new schedule.")
+      except Exception as e:
+          # This will fail if a schedule with the same display_name already exists.
+          # You might want to add logic to update the existing schedule instead.
+          print(f"Could not create schedule, it might already exist: {e}")
+
       EOF
 
-      python3 submit_pipeline.py
+      # 3. Kjør skriptet med Python fra det virtuelle miljøet
+      ./venv/bin/python submit_pipeline.py
 
 images:
 - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}'
