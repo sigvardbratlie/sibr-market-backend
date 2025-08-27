@@ -63,7 +63,7 @@ steps:
 ## ---- STEG 3: Kompiler pipeline-definisjonen ----
 #- name: 'python:3.11'
 #  id: 'compile-pipeline'
-# # waitFor: ['push-scraping', 'push-geocoding', 'push-modeling']
+#  waitFor: ['push-scraping', 'push-geocoding', 'push-modeling']
 #  entrypoint: 'bash'
 #  args:
 #  - '-c'
@@ -79,7 +79,7 @@ steps:
 # ---- STEP 4: Create pipeline ----
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   id: 'schedule-pipeline'
-  waitFor: ['compile-pipeline']
+  #waitFor: ['compile-pipeline']
   # Endre entrypoint til bash for å kunne kjøre flere kommandoer
   entrypoint: 'bash'
   args:
