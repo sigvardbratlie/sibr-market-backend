@@ -25,7 +25,6 @@ google-cloud-storage
 google-crc32c
 google-genai
 lightgbm
-matplotlib
 numpy
 pandas
 pandas-gbq
