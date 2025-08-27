@@ -52,7 +52,7 @@ steps:
 #  id: 'push-geocoding'
 #  waitFor: ['build-geocoding']
 #  args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}']
-#
+
 #- name: 'gcr.io/cloud-builders/docker'
 #  id: 'push-modeling'
 #  waitFor: ['build-modeling']
