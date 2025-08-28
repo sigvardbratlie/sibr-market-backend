@@ -59,9 +59,9 @@ steps:
   args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}']
 
 # ---- STEG 3: Kompiler og opprett/oppdater pipeline-schedule ----
-- name: 'python:3.9' # Bruk en standard python-image
+- name: 'python:3.11'
   id: 'deploy-pipeline'
-  waitFor: ['push-scraping', 'push-modeling',"push-geocoding"] # Vent til alle images er pushet
+  waitFor: ['push-scraping', 'push-modeling',"push-geocoding"]
   entrypoint: 'bash'
   args:
   - '-c'
