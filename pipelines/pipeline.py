@@ -4,6 +4,7 @@ from google.cloud import storage
 from dotenv import load_dotenv
 import os
 from pathlib import Path
+import argparse
 
 
 load_dotenv()
@@ -24,9 +25,15 @@ BUCKET_NAME = 'sibr-market'
 BUCKET_URI = f'gs://{BUCKET_NAME}'
 REPO = 'sibr-market-repo'
 
-SCRAPING_IMAGE_URI = f"{REGION}-docker.pkg.dev/{PROJECT_ID}/{REPO}/scraping:latest"
-GEOCODING_IMAGE_URI = f"{REGION}-docker.pkg.dev/{PROJECT_ID}/{REPO}/geocoding:latest"
-MODELING_IMAGE_URI = f"{REGION}-docker.pkg.dev/{PROJECT_ID}/{REPO}/modeling:latest"
+parser = argparse.ArgumentParser()
+parser.add_argument("--commit-sha", type = str, default="latest", help = "The git commit SHA to use for the image tag")
+args = parser.parse_args()
+COMMIT_TAG = args.commit_sha
+print(f'Using image tag: {COMMIT_TAG}')
+
+SCRAPING_IMAGE_URI = f"{REGION}-docker.pkg.dev/{PROJECT_ID}/{REPO}/scraping:{COMMIT_TAG}"
+GEOCODING_IMAGE_URI = f"{REGION}-docker.pkg.dev/{PROJECT_ID}/{REPO}/geocoding:{COMMIT_TAG}"
+MODELING_IMAGE_URI = f"{REGION}-docker.pkg.dev/{PROJECT_ID}/{REPO}/modeling:{COMMIT_TAG}"
 
 # ---- PIPELINE COMPONENTS ----
 @dsl.container_component
@@ -94,16 +101,27 @@ if __name__ == '__main__':
         pipeline_func=create_pipeline,
         package_path=PIPELINE_JSON
     )
+
+    client = storage.Client()
+    bucket = client.get_bucket(BUCKET_NAME)
+    blob = bucket.blob(PIPELINE_JSON)
+    blob.upload_from_filename(PIPELINE_JSON)
+
     aiplatform.init(project=PROJECT_ID,
-                    location=REGION,)
+                    location=REGION, )
     job = aiplatform.PipelineJob(
         display_name='sibr-market-pipeline',
         template_path=PIPELINE_JSON,
         pipeline_root=BUCKET_URI,
     )
 
-    client = storage.Client()
-    client.get_bucket(BUCKET_NAME).blob(PIPELINE_JSON).upload_from_filename(PIPELINE_JSON)
+    job_schedul = job.create_schedule(
+        display_name="run-sibr-market-pipeline",
+        cron = "0 2 */3 * *",
+        max_concurrent_run_count = 1,
+    )
+    print(f'Created schedule: {job_schedul.name}')
 
-    #job.run()
-    #kjør denne: gsutil cp sibr_market_pipeline.json gs://sibr-market/
+    print(f'Starting the first run immediately')
+    job.run()
+    print(f'Finished starting the first run')

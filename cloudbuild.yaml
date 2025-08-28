@@ -1,7 +1,6 @@
 options:
   logging: CLOUD_LOGGING_ONLY
 
-
 steps:
 # STEP 0: Check the commit message.
 - name: 'gcr.io/cloud-builders/git' # <-- THIS IS THE FIX. Use the official git image.
@@ -18,98 +17,54 @@ steps:
       echo "Keyword found. Proceeding with build."
     fi
 
-## ---- STEG 1: Build the Docker images in parallel ----
-#- name: 'gcr.io/cloud-builders/docker'
-#  id: 'build-scraping'
-#  args:
-#    - 'build'
-#    - '-t'
-#    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}'
-#    - './scraping'
+# ---- STEG 1: Build the Docker images in parallel ----
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-scraping'
+  args:
+    - 'build'
+    - '-t'
+    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}'
+    - './scraping'
 
-#- name: 'gcr.io/cloud-builders/docker'
-#  id: 'build-geocoding'
-#  args:
-#    - 'build'
-#    - '-t'
-#    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}'
-#    - './geocoding'
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-geocoding'
+  args:
+    - 'build'
+    - '-t'
+    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}'
+    - './geocoding'
 
-#- name: 'gcr.io/cloud-builders/docker'
-#  id: 'build-modeling'
-#  args:
-#    - 'build'
-#    - '-t'
-#    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}'
-#    - './modeling'
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-modeling'
+  args:
+    - 'build'
+    - '-t'
+    - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}'
+    - './modeling'
 
-## ---- STEP 2: Push to Artifact Registry ----
-#- name: 'gcr.io/cloud-builders/docker'
-#  id: 'push-scraping'
-#  waitFor: ['build-scraping']
-#  args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}']
+# ---- STEP 2: Push to Artifact Registry ----
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'push-scraping'
+  waitFor: ['build-scraping']
+  args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}']
 
-#- name: 'gcr.io/cloud-builders/docker'
-#  id: 'push-geocoding'
-#  waitFor: ['build-geocoding']
-#  args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}']
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'push-geocoding'
+  waitFor: ['build-geocoding']
+  args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}']
 
-#- name: 'gcr.io/cloud-builders/docker'
-#  id: 'push-modeling'
-#  waitFor: ['build-modeling']
-#  args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}']
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'push-modeling'
+  waitFor: ['build-modeling']
+  args: ['push', 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}']
 
-## ---- STEG 3: Compile the pipeline ----
-#- name: 'python:3.11'
-#  id: 'compile-pipeline'
-#  waitFor: ['push-scraping', 'push-geocoding', 'push-modeling']
-#  entrypoint: 'bash'
-#  args:
-#  - '-c'
-#  - |
-#    sed -i "s|SCRAPING_IMAGE_PLACEHOLDER|europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}|g" pipelines/pipeline.py
-#    sed -i "s|GEOCODING_IMAGE_PLACEHOLDER|europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}|g" pipelines/pipeline.py
-#    sed -i "s|MODELING_IMAGE_PLACEHOLDER|europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}|g" pipelines/pipeline.py
-
-#    # Nå, installer dependencies og kompiler filen som nå har de korrekte URI-ene
-#    pip install -r pipelines/requirements.txt && \
-#    python pipelines/pipeline.py
-
-# ---- STEP 4: Opprett eller Oppdater Schedule med gcloud (KORRIGERT) ----
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  id: 'submit-or-update-pipeline-schedule'
-  waitFor: ['compile-pipeline']
+# ---- STEG 3: Kompiler og opprett/oppdater pipeline-schedule ----
+- name: 'python:3.9' # Bruk en standard python-image
+  id: 'deploy-pipeline'
+  waitFor: ['push-scraping', 'push-modeling',"push-geocoding"] # Vent til alle images er pushet
   entrypoint: 'bash'
   args:
-    - '-c'
-    - |
-      set -e
-      SCHEDULE_NAME="sibr-market-schedule"
-      REGION="europe-west1"
-      PIPELINE_SPEC_URI="gs://sibr-market/sibr_market_pipeline.json"
-      CRON_EXPRESSION="0 2 */3 * *"
-
-      # Bruker \\ for å unngå at Cloud Build feiltolker filteret
-      SCHEDULE_ID=$$(gcloud ai pipeline-schedules list \
-        --region=\${REGION} \
-        --filter="displayName=\${SCHEDULE_NAME}" \
-        --format="value(name)" || true)
-
-      if [[ -n "\${SCHEDULE_ID}" ]]; then
-        echo "Schedule exists. Updating pipeline spec."
-        gcloud ai pipeline-schedules update \${SCHEDULE_ID} \
-          --pipeline-spec-uri=\${PIPELINE_SPEC_URI} \
-          --region=\${REGION}
-      else
-        echo "Schedule does not exist. Creating a new one."
-        gcloud ai pipeline-schedules create \
-          --display-name=\${SCHEDULE_NAME} \
-          --cron="\${CRON_EXPRESSION}" \
-          --pipeline-spec-uri=\${PIPELINE_SPEC_URI} \
-          --region=\${REGION}
-      fi
-#
-#images:
-#- 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/scraping:${COMMIT_SHA}'
-#- 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/geocoding:${COMMIT_SHA}'
-#- 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}'
+  - '-c'
+  - |
+    pip install -r pipelines/requirements.txt
+    python pipelines/pipeline.py --commit-sha ${COMMIT_SHA}
