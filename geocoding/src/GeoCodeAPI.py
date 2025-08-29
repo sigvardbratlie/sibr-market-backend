@@ -262,7 +262,7 @@ class nominatimAPI(GeoBase):
     def __init__(self, logger = None):
         super().__init__(logger_name='nominatim', logger = logger)
         self.base_url = "https://nominatim.openstreetmap.org/"
-        self.bq = BigQuery(logger = self.logger)
+        self.bq = BigQuery(project_id = GOOGLE_CLOUD_PROJECT, logger = logger)
 
     async def get_item(self,address):
         search_endpoint = "search"
