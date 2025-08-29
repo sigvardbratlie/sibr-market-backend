@@ -13,7 +13,7 @@ import json
 import abc
 from dotenv import load_dotenv
 #os.chdir("..")
-load_dotenv()
+#load_dotenv()
 
 class RateLimitError(Exception):
     """Custom exception for rate limit errors."""
@@ -356,7 +356,7 @@ class geonorgeAPI(GeoBase):
     def __init__(self, logger = None):
         super().__init__(logger_name='geonorge',logger = logger)
         self.base_url = "https://ws.geonorge.no/adresser/v1/"
-        self.bq = BigQuery(logger = self.logger)
+        self.bq = BigQuery(project_id = GOOGLE_CLOUD_PROJECT, logger = logger)
 
     async def get_item(self,address):
         search_endpoint = "sok"

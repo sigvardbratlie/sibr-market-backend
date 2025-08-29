@@ -68,23 +68,25 @@ def run_clean(): # Endret
 
 # ---- PIPELINE DEFINITION ----
 @dsl.pipeline(
-    name='sibr-market-pipeline',
+    name='sibr-market-pipeline-test',
     description='Pipeline for scraping, geocoding, and cleaning/predicting data for SIBR Market',
     pipeline_root=BUCKET_URI
 )
 def create_pipeline(
 ):
     # Step 1: Run scraping
-    # Send image-parameteren inn i komponenten
     scraping_task = run_scraping()
     scraping_task.set_display_name('1. Scraping Data')
     scraping_task.set_caching_options(False)
 
     # Step 2: Run cleaning
+    #cleaning_task = run_clean()
     cleaning_task = run_clean().after(scraping_task)
     cleaning_task.set_display_name('2. Cleaning Data')
+    cleaning_task.set_caching_options(False)
 
     # Step 2: Run geocoding
+    #geocoding_task = run_geocoding()
     geocoding_task = run_geocoding().after(cleaning_task)
     geocoding_task.set_display_name('3. Geocoding Addresses')
     geocoding_task.set_caching_options(False)
@@ -108,19 +110,20 @@ if __name__ == '__main__':
     blob.upload_from_filename(PIPELINE_JSON)
 
     aiplatform.init(project=PROJECT_ID,
-                    location=REGION, )
+                    location=REGION,
+                    service_account="pipeline@sibr-market.iam.gserviceaccount.com")
     job = aiplatform.PipelineJob(
         display_name='sibr-market-pipeline',
         template_path=PIPELINE_JSON,
         pipeline_root=BUCKET_URI,
     )
 
-    job_schedul = job.create_schedule(
+    job_schedule = job.create_schedule(
         display_name="run-sibr-market-pipeline",
         cron = "0 2 */3 * *",
         max_concurrent_run_count = 1,
     )
-    print(f'Created schedule: {job_schedul.name}')
+    print(f'Created schedule: {job_schedule.name}')
 
     print(f'Starting the first run immediately')
     job.run()
