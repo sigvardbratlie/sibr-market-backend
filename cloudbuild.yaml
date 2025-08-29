@@ -42,6 +42,7 @@ steps:
     - 'europe-west1-docker.pkg.dev/sibr-market/sibr-market-repo/modeling:${COMMIT_SHA}'
     - './modeling'
 
+
 # ---- STEP 2: Push to Artifact Registry ----
 - name: 'gcr.io/cloud-builders/docker'
   id: 'push-scraping'
