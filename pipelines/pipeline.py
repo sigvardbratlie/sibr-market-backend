@@ -125,6 +125,6 @@ if __name__ == '__main__':
     )
     print(f'Created schedule: {job_schedule.name}')
 
-    print(f'Starting the first run immediately')
-    job.run()
-    print(f'Finished starting the first run')
+    # print(f'Starting the first run immediately')
+    # job.run()
+    # print(f'Finished starting the first run')
