@@ -41,7 +41,7 @@ class CustomBigQuery(BigQuery):
         return self.read_bq(sql)
 
     def read_geonorge(self):
-        return self.read_bq('SELECT * FROM admin.geo_norge')
+        return self.read_bq('SELECT * FROM admin.geo_norge_old')
 
     def read_salestime(self, replace=False) -> pd.DataFrame:
         self._logger.warning("Method depreciated!")

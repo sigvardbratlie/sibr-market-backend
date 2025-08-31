@@ -85,16 +85,16 @@ def create_pipeline(
     cleaning_task.set_display_name('2. Cleaning Data')
     cleaning_task.set_caching_options(False)
 
-    # Step 2: Run geocoding
+    # Step 3: Run geocoding
     #geocoding_task = run_geocoding()
     geocoding_task = run_geocoding().after(cleaning_task)
     geocoding_task.set_display_name('3. Geocoding Addresses')
     geocoding_task.set_caching_options(False)
 
-    # Step 3: Run cleaning and prediction
-    clean_predict_task = run_predict().after(geocoding_task)
-    clean_predict_task.set_display_name('4. Predict Data')
-    clean_predict_task.set_caching_options(False)
+    # # Step 4: Run cleaning and prediction
+    # clean_predict_task = run_predict().after(geocoding_task)
+    # clean_predict_task.set_display_name('4. Predict Data')
+    # clean_predict_task.set_caching_options(False)
 
 if __name__ == '__main__':
 
