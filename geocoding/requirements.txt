@@ -9,9 +9,13 @@ aiohappyeyeballs==2.6.1
 aiohttp==3.12.15
     # via
     #   -r requirements.in
+    #   aresponses
     #   gcsfs
+    #   sibr-api
 aiosignal==1.4.0
     # via aiohttp
+aresponses==3.0.0
+    # via sibr-api
 asttokens==3.0.0
     # via stack-data
 atpublic==5.1
@@ -232,6 +236,8 @@ idna==3.10
     #   yarl
 importlib-metadata==8.7.0
     # via opentelemetry-api
+iniconfig==2.1.0
+    # via pytest
 ipython==9.4.0
     # via ipywidgets
 ipython-pygments-lexers==1.1.1
@@ -249,9 +255,7 @@ kiwisolver==1.4.9
 markdown-it-py==4.0.0
     # via rich
 matplotlib==3.10.5
-    # via
-    #   -r requirements.in
-    #   bigframes
+    # via bigframes
 matplotlib-inline==0.1.7
     # via ipython
 mdurl==0.1.2
@@ -287,6 +291,7 @@ packaging==25.0
     #   matplotlib
     #   pandas-gbq
     #   pyogrio
+    #   pytest
 pandas==2.3.2
     # via
     #   -r requirements.in
@@ -295,6 +300,7 @@ pandas==2.3.2
     #   geopandas
     #   google-cloud-bigquery
     #   pandas-gbq
+    #   sibr-api
     #   sibr-module
 pandas-gbq==0.29.2
     # via
@@ -304,12 +310,16 @@ pandas-gbq==0.29.2
     #   sibr-module
 parso==0.8.5
     # via jedi
+pathlib==1.0.1
+    # via -r requirements.in
 pexpect==4.9.0
     # via ipython
 pillow==11.3.0
     # via
     #   -r requirements.in
     #   matplotlib
+pluggy==1.6.0
+    # via pytest
 prompt-toolkit==3.0.51
     # via ipython
 propcache==0.3.2
@@ -368,6 +378,7 @@ pygments==2.19.2
     # via
     #   ipython
     #   ipython-pygments-lexers
+    #   pytest
     #   rich
 pyogrio==0.11.1
     # via geopandas
@@ -375,6 +386,14 @@ pyparsing==3.2.3
     # via matplotlib
 pyproj==3.7.2
     # via geopandas
+pytest==8.4.1
+    # via
+    #   pytest-asyncio
+    #   sibr-api
+pytest-asyncio==1.1.0
+    # via
+    #   aresponses
+    #   sibr-api
 python-dateutil==2.9.0.post0
     # via
     #   bigframes
@@ -382,7 +401,9 @@ python-dateutil==2.9.0.post0
     #   matplotlib
     #   pandas
 python-dotenv==1.1.1
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   sibr-api
 pytz==2025.2
     # via
     #   bigframes
@@ -409,6 +430,8 @@ shapely==2.1.1
     #   -r requirements.in
     #   bigframes
     #   geopandas
+sibr-api==0.1.2
+    # via -r requirements.in
 sibr-module==0.1.9
     # via -r requirements.in
 six==1.17.0
