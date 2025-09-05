@@ -4,7 +4,7 @@ from datetime import datetime
 import argparse
 from dotenv import load_dotenv
 from pathlib import Path
-from src.GeoCodeAPI import geonorgeAPI,nominatimAPI
+from src.GeoCodeAPI import geoApi
 from sibr_module import Logger
 
 load_dotenv()
@@ -18,22 +18,22 @@ if cred_filename:
     load_dotenv(dotenv_path=dotenv_path)
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(project_root.parent / cred_filename)
 
-map_geocoders = {"nominatim" : nominatimAPI,
-                "geonorge" : geonorgeAPI}
+# map_geocoders = {"nominatim" : nominatimAPI,
+#                 "geonorge" : geonorgeAPI}
 
 map_conc_requests = {"nominatim" : 5,
                      "geonorge" : 30}
 
 parser = argparse.ArgumentParser(f'Ceocoding script by SIBR')
 group = parser.add_mutually_exclusive_group(required=False)
-parser.add_argument('--api', type=str, default='nominatim', help='Geocoding API to use (default: nominatim)')
 parser.add_argument('--use-proxy', action='store_true', help='Use proxy for geocoding requests (default: True)')
 group.add_argument('--address', type=str, help='Geocode address')
 parser.add_argument('--no-save', action='store_true', help='Disable saving results')
 parser.add_argument('--limit', type=int, default=None, help='Limit number of rows fetched from SQL (default: None)')
 parser.add_argument('--log-level', type=str, default='INFO', help='Logging level (default: INFO)')
 parser.add_argument('--cloud-logging', action='store_true', default=False, help='Enable cloud logging (default: False)')
-parser.add_argument("--geocoder", choices=map_geocoders.keys(), default="geonorge")
+#parser.add_argument('--api', type=str, default='nominatim', help='Geocoding API to use (default: nominatim)')
+parser.add_argument("--geocoder", choices=["geonorge", "nominatim"], default="geonorge")
 
 if __name__ == "__main__":
     async def main():
@@ -42,11 +42,17 @@ if __name__ == "__main__":
         logger = Logger(log_name='geocoding',enable_cloud_logging=args.cloud_logging)
         starttime = datetime.now()
 
+        geo = geoApi(logger=logger)
+
         if args.address:
-            geocoder = map_geocoders[args.geocoder](logger=logger)
-            result = await geocoder.get_item(args.address)
-            res = geocoder._transform_output(result).to_dict(orient='records')[0]
-            print(f'Coordinates for address {args.address}: {res.get("lat")},{res.get("lng")}')
+            if args.geocoder == "geonorge":
+                if not isinstance(args.address, list):
+                    addresses = list(args.address)
+                else:
+                    addresses = args.address
+                result = await geo.get_geonorge(addresses)
+                res = geo.transform_single_geonorge(result).to_dict(orient='records')[0]
+                print(f'Coordinates for address {args.address}: {res.get("lat")},{res.get("lng")}')
         else:
             logger.info(f'====== STARTING GEONORGE GEOCODING ======')
             sql = '''
@@ -66,18 +72,18 @@ if __name__ == "__main__":
                         '''
             if args.limit:
                 sql += f'\nLIMIT {args.limit}'
-            geonorge = geonorgeAPI(logger = logger)
-            df = geonorge.bq.read_bq(sql)
+
+            df = geo.bq.read_bq(sql)
             inputs = df.set_index("item_id")["address"].to_dict()
             try:
-                save = not args.no_save
-                await geonorge.get_items_with_ids(inputs,
-                                                    save=save,
-                                                    save_interval=5000,
-                                                    concurrent_requests=30,)
+                await geo.get_items_with_ids(inputs,
+                                    fetcher=geo.get_geonorge,
+                                  transformer=geo.transformer_geonorge,
+                                  saver = geo.save_func,
+                                    save_interval=5000,
+                                    concurrent_requests=30,)
             finally:
-                await geonorge.close()
-            nomi = nominatimAPI(logger = logger)
+                await geo.close()
             logger.info(f'====== STARTING NOMINATIM GEOCODING ======\n \tfetching those items that Geonorge missed!')
             sql = '''
                         SELECT 
@@ -97,18 +103,18 @@ if __name__ == "__main__":
 
             if args.limit:
                 sql += f'\nLIMIT {args.limit}'
-            df = nomi.bq.read_bq(sql)
+            df = geo.bq.read_bq(sql)
             inputs = df.set_index("item_id")["address"].to_dict()
             try:
-                save = not args.no_save
-
-                await nomi.get_items_with_ids(inputs,
-                                                save=save,
-                                                save_interval=500,
-                                                concurrent_requests=5)
+                await geo.get_items_with_ids(inputs,
+                                    fetcher=geo.get_nomi,
+                                  transformer=geo.transformer_nomi,
+                                  saver = geo.save_func,
+                                    save_interval=5000,
+                                    concurrent_requests=5,)
             finally:
-                nomi.logger.info(f'Geocoding process completed. Time used: {datetime.now() - starttime}.')
-                await nomi.close()
+                logger.info(f'Geocoding process completed. Time used: {datetime.now() - starttime}.')
+                await geo.close()
 
 
 
