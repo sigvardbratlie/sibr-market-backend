@@ -18,8 +18,6 @@ if cred_filename:
     load_dotenv(dotenv_path=dotenv_path)
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(project_root.parent / cred_filename)
 
-# map_geocoders = {"nominatim" : nominatimAPI,
-#                 "geonorge" : geonorgeAPI}
 
 map_conc_requests = {"nominatim" : 5,
                      "geonorge" : 30}
