@@ -86,10 +86,6 @@ class Clean(SibrBase):
         self.geo = None
         #self.salgs = None
 
-    ## TRANSFORM METHODS
-    import re
-
-
     def extract_int(self, x):
         """
         Extracts an integer from a string.
@@ -705,7 +701,7 @@ class Clean(SibrBase):
 
         df['ownership_type'] = df['ownership_type'].str.replace(r'^eieform', '', case=False, regex=True).str.strip()
         df['ownership_type'] = df['ownership_type'].apply(
-            lambda x: x.replace('(Selveier)', "") if isinstance(x, str) else x)
+            lambda x: x.replace('(Selveier)', "").strip() if isinstance(x, str) else x)
         df['property_type'] = df['property_type'].str.replace(r'^boligtype', '', case=False, regex=True)
         df['property_type'] = df['property_type'].apply(lambda x: x.replace('/', "_") if isinstance(x, str) else x).str.strip()
         df['dealer'] = df['dealer'].fillna('private').str.strip()
@@ -1127,7 +1123,7 @@ class Clean(SibrBase):
                      'Gårdsbruk_Småbruk',
                      'Andre',
                      'Bygård_Flermannsbolig']
-        own_type = ['Eier ', 'Andel', 'Aksje', 'Annet', 'Obligasjon']
+        own_type = ['Eier', 'Andel', 'Aksje', 'Annet', 'Obligasjon']
 
         df = self.mk_cat(df, 'property_type', prop_type)
         df = self.mk_cat(df, 'ownership_type', own_type)
