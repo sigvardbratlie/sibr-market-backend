@@ -68,7 +68,7 @@ def run_clean(): # Endret
 
 # ---- PIPELINE DEFINITION ----
 @dsl.pipeline(
-    name='sibr-market-pipeline-test',
+    name='sibr-market-pipeline',
     description='Pipeline for scraping, geocoding, and cleaning/predicting data for SIBR Market',
     pipeline_root=BUCKET_URI
 )
